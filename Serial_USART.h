@@ -1,31 +1,43 @@
 /*
  * Serial_USART.h
+ * 
+ *  Author:   jpagel
+ *  Modified: BlackSheepAt
  *
- * Created: 10/18/2014 11:46:13 PM
- *  Author: jpagel
  */ 
-
 
 #ifndef SERIAL_USART_H_
 #define SERIAL_USART_H_
 
-#include "ProgMemData.h"
+  #include <avr/io.h>
+  #include "USART.h" // code folgt diese woche
+  #include "ProgMemData.h" 
 
-class Serial
-{
-	public:
-	void sendChar(char c);
-	void sendString(char *text);
-	char usart_receiveByte();
-	void SerialBegin();
-	void SerialBeginXMEGA(baud_t baud);
-	};
+  #ifndef EOF
+    #define EOF (-1)
+  #endif
 
+  class Serial{
+    public:
+      Serial(){};
+      ~Serial(){};
+    public:
 
+      // Blocking until puffer !full
+      void sendChar(char c);       
+      void sendString(char* text);
+      void sendString(const char* &text);
 
+      // Blocking until char received
+      char receiveChar();   
 
+      void SerialBegin();
+      void SerialBegin(baud_t baud);
+      void SerialEnd();
 
-
+      char usart_receiveByte();
+      void SerialBeginXMEGA(baud_t baud);
+  };
 
 
 #endif /* SERIAL_USART_H_ */
