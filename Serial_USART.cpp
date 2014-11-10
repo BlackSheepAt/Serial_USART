@@ -1,149 +1,71 @@
-/*
- * Serial_USART.cpp
- *
- * Created: 10/18/2014 11:45:25 PM
- *  Author: jpagel
- */ 
+/* **************************************************************;
+//> > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >;
+// **************************************************************;
+                                                 Serial_USART.cpp
+  "BEER-WARE LICENSE"  
 
+  As long as you retain this notice you can do whatever you want 
+  with this stuff. If we meet some day, and you think  this stuff 
+  is  worth it, you can buy me a beer in return.
 
-#include <avr/io.h>
+                                    Author:   jpagel
+                                    Modified: BlackSheepAt@github
+
+// **************************************************************;
+//> > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >;
+// ************************************************************ */ 
 #include "Serial_USART.h"
-#include "ProgMemData.h"
-#include <util/setbaud.h>
-
-
-
-#if defined(__AVR_ATXMEGA128D3__) || defined(__AVR_ATXMEGA64A1U__) //Really any XMEGA Since they are all pretty much much compatible minus USB variations.
-
-void Serial::sendChar(char c)
-{
-	
-	while( !(USARTC0_STATUS & USART_DREIF_bm) ); //Wait until DATA buffer is empty
-	
-	USARTC0_DATA = c;
-	
-}
-
-void Serial::sendString(char *text)
-{
-	while(*text)
-	{
-		sendChar(*text++);
-	}
-}
-
-char Serial::receiveByte() //Blocking
-{
-	while( !(USARTC0_STATUS & USART_RXCIF_bm) ); //Interesting DRIF didn't work.
-	return USARTC0_DATA;
-}
-
-void Serial::SerialBeginXMEGA(baud_t baud)
-{
-	//baud_t temp = baud;
-	
-	int16_t scaler = baud.Scaler;
-	int32_t bsel = baud.Bsel;
-	int16_t doubleSpeed = baud.DoubleSpeed;
-	
-	USARTC0_BAUDCTRLB = USARTC0.BAUDCTRLB = 0| (bsel >> 8) | (scaler << USART_BSCALE0_bp);
-	USARTC0_BAUDCTRLA = bsel;
-	
-	//Disable interrupts, just for safety
-	USARTC0_CTRLA = 0;
-	//8 data bits, no parity and 1 stop bit
-	USARTC0_CTRLC = USART_CHSIZE_8BIT_gc;
-	
-	//Enable receive and transmit
-	
-	if(doubleSpeed)
-	{
-		USARTC0_CTRLB = USART_TXEN_bm | USART_RXEN_bm | USART_CLK2X_bm;
-	}
-	else
-	{
-		USARTC0_CTRLB = USART_TXEN_bm | USART_RXEN_bm | ~USART_CLK2X_bm;
-	}
-
-
-}
-
-#endif
-
-#if defined(__AVR_ATMEGA328P__) || defined(__AVR_ATMEGA8__) || defined(__AVR_ATMEGA8A__) || defined(__AVR_ATMEGA168P)
-
-#if defined(__AVR_ATMEGA328P__) || defined(__AVR_ATMEGA168P)
-
-#undef UDR
-#undef UCSRA
-#undef UCSRB
-#undef UDRE
-#undef UBRRH
-#undef UBRRL
-#undef U2X
-#undef RXEN
-#undef TXEN
-#undef TXC
-#undef RXC
-#define UDR UDR0
-#define UCSRA UCSR0A
-#define UCSRB UCSR0B
-#define UDRE UDRE0
-#define UBRRH UBRR0H
-#define UBRRL UBRR0L
-#define U2X U2X0
-#define RXEN RXEN0
-#define TXEN TXEN0
-#define TXC TXC0
-#define RXC RXC0
-
-
-#endif
-
-void configureSerial()
-{
-	UBRRH = UBRRH_VALUE;
-	UBRRL = UBRRL_VALUE;
-	#if USE_2X
-	UCSRA |= (1<<U2X);
-	#else
-	UCSRA &= ~(1<<U2X);
-	#endif
-	
-}
-
-void startSerial()
-{
-	UCSRB |= (1<<RXEN) | (1<<TXEN);
-	
-}
-
-
-void sendChar(char c) {
-	UDR = c;
-	loop_until_bit_is_set(UCSRA, TXC); /* Wait until transmission ready. */
-}
-
-char receiveByte() {
-	loop_until_bit_is_set(UCSRA, RXC); /* Wait until data exists. */
-	return UDR;
-}
-
-
-#ifndef F_CPU
-#error You Must declare F_CPU
-#endif
-
-#ifndef BAUD
-#error You must define BAUD to your desired BAUDrate
-
-#endif
-
-	void Serial::SerialBegin()
-	{
-		configureSerial();
-		startSerial();
-		
-	}
-
-	#endif
+// **************************************************************;
+  void Serial::sendChar(char c){ 
+     while( !txUSART(c) ){
+       // Blocking until puffer !full
+     }
+  }
+// **************************************************************;
+  void Serial::sendString(char* text){ 
+	   while(*text) sendChar(*text++); 
+  }
+// **************************************************************;
+  void Serial::sendString(const char* &text){
+   char* iIT = (char*)text;
+   sendString(iIT);
+  }
+// **************************************************************;
+  char Serial::receiveChar(){ //Blocking
+    int retval;
+    while(EOF==(retval=rxUSART())){
+      // Blocking until char received
+    }
+    return (char)retval; 
+  }
+// **************************************************************; 
+ void Serial::SerialEnd(){
+   disableUSART();
+ }
+// **************************************************************;
+ void Serial::SerialBegin(uint32_t baud, uint32_t mhz){    
+    uint16_t iTemp = ((mhz-(16*baud))/(16*baud));  
+    if(iTemp>0x0FFF){
+      enableU2X();
+      iTemp = iTemp>>1;
+    }else{
+      disableU2X();
+    }
+    setUBRR(iTemp);
+    enableUSART();
+  } 
+// **************************************************************;
+  void Serial::SerialBegin(){
+      #if !defined(BAUD)  
+      #warning default value #define BAUD 57600
+      #define BAUD 57600
+      #endif
+      #if !defined(F_CPU)
+      #warning default value #define F_CPU 16000000
+      #define F_CPU 16000000
+      #endif
+     SerialBegin(BAUD, F_CPU);		
+  }
+// **************************************************************;
+//> > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >;
+// **************************************************************; 
