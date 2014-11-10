@@ -1,17 +1,28 @@
-/*
- * Serial_USART.h
- * 
- *  Author:   jpagel
- *  Modified: BlackSheepAt
- *
- */ 
+/* **************************************************************;
+//> > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >;
+// **************************************************************;
+                                                   Serial_USART.h
+  "BEER-WARE LICENSE"  
+
+  As long as you retain this notice you can do whatever you want 
+  with this stuff. If we meet some day, and you think  this stuff 
+  is  worth it, you can buy me a beer in return.
+
+                                    Author:   jpagel
+                                    Modified: BlackSheepAt@github
+
+// **************************************************************;
+//> > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >;
+// ************************************************************ */ 
 
 #ifndef SERIAL_USART_H_
 #define SERIAL_USART_H_
 
   #include <avr/io.h>
-  #include "USART.h"           // code will be uploaded at Friday
-  //#include "ProgMemData.h"   // ambiguous
+  #include "USART.h" 
+  
+  //#define BAUD 57600
+  //#define F_CPU 16000000
 
   #ifndef EOF
     #define EOF (-1)
@@ -31,13 +42,18 @@
       // Blocking until char received
       char receiveChar();   
 
-      void SerialBegin();
-      void SerialBegin(int64_t baud);
+      // enable 
+      void SerialBegin();// using BAUD, F_CPU
+      void SerialBegin(uint32_t baud, uint32_t mhz);
+      
+      // disable
       void SerialEnd();
-
-      char usart_receiveByte();
-      void SerialBeginXMEGA(int64_t baud);
   };
 
 
 #endif /* SERIAL_USART_H_ */
+
+// **************************************************************;
+//> > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >;
+// **************************************************************;
+
