@@ -10,8 +10,8 @@
 #define SERIAL_USART_H_
 
   #include <avr/io.h>
-  #include "USART.h" // code folgt diese woche
-  #include "ProgMemData.h" 
+  #include "USART.h"           // code will be uploaded at Friday
+  //#include "ProgMemData.h"   // ambiguous
 
   #ifndef EOF
     #define EOF (-1)
@@ -32,11 +32,11 @@
       char receiveChar();   
 
       void SerialBegin();
-      void SerialBegin(baud_t baud);
+      void SerialBegin(int64_t baud);
       void SerialEnd();
 
       char usart_receiveByte();
-      void SerialBeginXMEGA(baud_t baud);
+      void SerialBeginXMEGA(int64_t baud);
   };
 
 
